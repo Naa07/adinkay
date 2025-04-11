@@ -2,7 +2,6 @@
 document.addEventListener("DOMContentLoaded", function () {
   // App state
   const state = {
-    activeTab: "beranda",
     mobileMenuOpen: false,
     dropdownUPT: false,
     dropdownBerita: false,
@@ -33,49 +32,25 @@ document.addEventListener("DOMContentLoaded", function () {
   const loginModal = document.getElementById("login-modal");
   const cancelLoginButton = document.getElementById("cancel-login");
   const loginForm = document.getElementById("login-form");
-  const navLinks = document.querySelectorAll(".nav-link:not(.dropdown-toggle)");
-  const mobileNavLinks = document.querySelectorAll(".mobile-nav-link");
-  const footerNavLinks = document.querySelectorAll(".footer-nav-link");
   const dropdownToggles = document.querySelectorAll(".dropdown-toggle");
-  const dropdownItems = document.querySelectorAll(".dropdown-item");
-  const contentTabs = document.querySelectorAll(".content-tab");
   const newsContainer = document.getElementById("news-container");
+  const paginationLinks = document.querySelectorAll(".pagination-link");
+  const paginationPrev = document.querySelector(".pagination-prev");
+  const paginationNext = document.querySelector(".pagination-next");
 
   // Initialize the app
   function init() {
-    renderActiveTab();
     renderNewsItems();
     setupEventListeners();
+    setupPagination();
   }
 
-  // Render the active tab
-  function renderActiveTab() {
-    // Hide all tabs
-    contentTabs.forEach((tab) => {
-      tab.classList.remove("active");
-    });
-
-    // Show active tab
-    const activeTab = document.getElementById(`${state.activeTab}-tab`);
-    if (activeTab) {
-      activeTab.classList.add("active");
-    }
-
-    // Update nav links
-    navLinks.forEach((link) => {
-      if (link.dataset.tab === state.activeTab) {
-        link.classList.add("active");
-        link.style.color = "#2563eb";
-      } else {
-        link.classList.remove("active");
-        link.style.color = "#64748b";
-      }
-    });
-  }
-
-  // Render news items
+  // Render news items - only if we're on the berita page
   function renderNewsItems() {
     if (!newsContainer) return;
+
+    // Check if news items are already rendered (static HTML)
+    if (newsContainer.children.length > 0) return;
 
     newsContainer.innerHTML = "";
 
@@ -87,10 +62,90 @@ document.addEventListener("DOMContentLoaded", function () {
         <img src="${item.img}" alt="${item.title}" class="news-image">
         <h3 class="news-title">${item.title}</h3>
         <p class="news-date">Tanggal: ${item.date}</p>
+        <a href="#" class="news-link">Baca selengkapnya</a>
       `;
 
       newsContainer.appendChild(newsCard);
     });
+  }
+
+  // Setup pagination
+  function setupPagination() {
+    if (!paginationLinks.length) return;
+
+    paginationLinks.forEach((link) => {
+      link.addEventListener("click", function (e) {
+        e.preventDefault();
+
+        // Remove active class from all links
+        paginationLinks.forEach((l) => l.classList.remove("active"));
+
+        // Add active class to clicked link
+        this.classList.add("active");
+
+        // Enable/disable prev/next buttons based on current page
+        const currentPage = parseInt(this.textContent);
+
+        if (paginationPrev) {
+          if (currentPage === 1) {
+            paginationPrev.classList.add("pagination-disabled");
+          } else {
+            paginationPrev.classList.remove("pagination-disabled");
+          }
+        }
+
+        if (paginationNext) {
+          const totalPages = paginationLinks.length;
+          if (currentPage === totalPages) {
+            paginationNext.classList.add("pagination-disabled");
+          } else {
+            paginationNext.classList.remove("pagination-disabled");
+          }
+        }
+      });
+    });
+
+    // Prev button
+    if (paginationPrev) {
+      paginationPrev.addEventListener("click", function (e) {
+        e.preventDefault();
+
+        const activeLink = document.querySelector(".pagination-link.active");
+        if (!activeLink) return;
+
+        const currentPage = parseInt(activeLink.textContent);
+        if (currentPage > 1) {
+          const prevLink = document.querySelector(
+            `.pagination-link:nth-child(${currentPage - 1})`,
+          );
+          if (prevLink) {
+            prevLink.click();
+          }
+        }
+      });
+    }
+
+    // Next button
+    if (paginationNext) {
+      paginationNext.addEventListener("click", function (e) {
+        e.preventDefault();
+
+        const activeLink = document.querySelector(".pagination-link.active");
+        if (!activeLink) return;
+
+        const currentPage = parseInt(activeLink.textContent);
+        const totalPages = paginationLinks.length;
+
+        if (currentPage < totalPages) {
+          const nextLink = document.querySelector(
+            `.pagination-link:nth-child(${currentPage + 1})`,
+          );
+          if (nextLink) {
+            nextLink.click();
+          }
+        }
+      });
+    }
   }
 
   // Setup event listeners
@@ -113,60 +168,27 @@ document.addEventListener("DOMContentLoaded", function () {
       loginForm.addEventListener("submit", handleLogin);
     }
 
-    // Tab navigation
-    navLinks.forEach((link) => {
-      link.addEventListener("click", (e) => {
-        e.preventDefault();
-        setActiveTab(link.dataset.tab);
-      });
-    });
-
-    mobileNavLinks.forEach((link) => {
-      link.addEventListener("click", (e) => {
-        e.preventDefault();
-        setActiveTab(link.dataset.tab);
-        toggleMobileMenu();
-      });
-    });
-
-    footerNavLinks.forEach((link) => {
-      link.addEventListener("click", (e) => {
-        e.preventDefault();
-        setActiveTab(link.dataset.tab);
-        window.scrollTo({ top: 0, behavior: "smooth" });
-      });
-    });
-
     // Dropdown toggles
     dropdownToggles.forEach((toggle) => {
-      toggle.addEventListener("click", (e) => {
-        e.preventDefault();
-        e.stopPropagation();
-        toggleDropdown(toggle.dataset.dropdown);
-      });
-    });
-
-    // Dropdown items
-    dropdownItems.forEach((item) => {
-      item.addEventListener("click", (e) => {
-        e.preventDefault();
-        e.stopPropagation();
-        setActiveTab(item.dataset.tab);
-        closeDropdowns();
+      toggle.addEventListener("click", function (event) {
+        toggleDropdown(toggle.dataset.dropdown, event);
       });
     });
 
     // Close dropdowns when clicking outside
-    document.addEventListener("click", (e) => {
-      // Only close if click is outside dropdown
-      if (!e.target.closest(".dropdown")) {
+    document.addEventListener("click", function (e) {
+      // Only close if click is outside dropdown and is not on the dropdown toggle
+      if (
+        !e.target.closest(".dropdown") &&
+        !e.target.classList.contains("dropdown-toggle")
+      ) {
         closeDropdowns();
       }
     });
 
     // Close modal when clicking outside
     if (loginModal) {
-      loginModal.addEventListener("click", (e) => {
+      loginModal.addEventListener("click", function (e) {
         if (e.target === loginModal) {
           toggleLoginModal();
         }
@@ -174,11 +196,46 @@ document.addEventListener("DOMContentLoaded", function () {
     }
 
     // Close modal on escape key
-    document.addEventListener("keydown", (e) => {
+    document.addEventListener("keydown", function (e) {
       if (e.key === "Escape" && state.showLoginModal) {
         toggleLoginModal();
       }
     });
+
+    // Setup filter buttons on berita page
+    const filterButtons = document.querySelectorAll(".filter-button");
+    if (filterButtons.length > 0) {
+      filterButtons.forEach((button) => {
+        button.addEventListener("click", function () {
+          // Remove active class from all buttons
+          filterButtons.forEach((btn) => btn.classList.remove("active"));
+
+          // Add active class to clicked button
+          this.classList.add("active");
+
+          // Here you would filter news items based on category
+          // For now, we'll just log the filter
+          console.log("Filter by:", this.textContent.trim());
+        });
+      });
+    }
+
+    // Setup search form on berita page
+    const searchForm = document.querySelector(".search-form");
+    if (searchForm) {
+      searchForm.addEventListener("submit", function (e) {
+        e.preventDefault();
+        const searchInput = this.querySelector(".search-input");
+        if (searchInput) {
+          const searchTerm = searchInput.value.trim();
+          if (searchTerm) {
+            console.log("Searching for:", searchTerm);
+            // Here you would implement search functionality
+            alert(`Mencari: ${searchTerm}`);
+          }
+        }
+      });
+    }
   }
 
   // Toggle mobile menu
@@ -191,12 +248,14 @@ document.addEventListener("DOMContentLoaded", function () {
   // Toggle login modal
   function toggleLoginModal() {
     state.showLoginModal = !state.showLoginModal;
-    loginModal.classList.toggle("show", state.showLoginModal);
+    if (loginModal) {
+      loginModal.classList.toggle("show", state.showLoginModal);
 
-    if (state.showLoginModal) {
-      document.body.style.overflow = "hidden";
-    } else {
-      document.body.style.overflow = "";
+      if (state.showLoginModal) {
+        document.body.style.overflow = "hidden";
+      } else {
+        document.body.style.overflow = "";
+      }
     }
   }
 
@@ -207,22 +266,8 @@ document.addEventListener("DOMContentLoaded", function () {
     toggleLoginModal();
   }
 
-  // Set active tab
-  function setActiveTab(tab) {
-    if (!tab) return;
-
-    state.activeTab = tab;
-    renderActiveTab();
-  }
-
   // Toggle dropdown
-  function toggleDropdown(dropdown) {
-    if (!dropdown) return;
-
-    // Prevent changing the active tab when toggling dropdown
-    event.preventDefault();
-    event.stopPropagation();
-
+  function toggleDropdown(dropdown, event) {
     if (dropdown === "upt") {
       state.dropdownUPT = !state.dropdownUPT;
       state.dropdownBerita = false;
@@ -240,6 +285,11 @@ document.addEventListener("DOMContentLoaded", function () {
 
     if (beritaDropdown) {
       beritaDropdown.classList.toggle("show", state.dropdownBerita);
+    }
+
+    // Prevent event propagation to avoid immediate closing
+    if (event) {
+      event.stopPropagation();
     }
   }
 

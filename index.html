@@ -29,7 +29,9 @@
             <nav class="main-navigation">
               <ul class="nav-list">
                 <li class="nav-item">
-                  <button class="nav-link" data-tab="beranda">Beranda</button>
+                  <button class="nav-link active" data-tab="beranda">
+                    Beranda
+                  </button>
                 </li>
                 <li class="nav-item">
                   <button class="nav-link" data-tab="profil">Profil</button>
@@ -81,6 +83,7 @@
               id="mobile-menu-toggle"
               class="mobile-menu-toggle"
               aria-label="Toggle menu mobile"
+              aria-expanded="false"
             >
               <svg
                 xmlns="http://www.w3.org/2000/svg"
@@ -124,12 +127,38 @@
         </div>
       </header>
 
-      
+      <!-- Login Modal -->
+      <div id="login-modal" class="modal">
+        <div class="modal-content">
+          <h2 class="modal-title">Login</h2>
+          <form id="login-form">
+            <div class="form-group">
+              <label for="username" class="form-label">Username</label>
+              <input type="text" id="username" class="form-input" required />
+            </div>
+            <div class="form-group">
+              <label for="password" class="form-label">Password</label>
+              <input
+                type="password"
+                id="password"
+                class="form-input"
+                required
+              />
+            </div>
+            <div class="form-actions">
+              <button type="button" id="cancel-login" class="btn btn-secondary">
+                Batal
+              </button>
+              <button type="submit" class="btn btn-primary">Login</button>
+            </div>
+          </form>
+        </div>
+      </div>
 
       <!-- Main Content -->
       <main class="main-content">
         <!-- Beranda (Home) Tab -->
-        <section id="beranda-tab" class="content-tab">
+        <section id="beranda-tab" class="content-tab active">
           <div class="hero-section">
             <img
               src="dinas-kesehatan-kota-surabaya.jpg"
@@ -348,11 +377,16 @@
                 <form class="contact-form">
                   <div class="form-group">
                     <label for="nama" class="form-label">Nama</label>
-                    <input type="text" id="nama" class="form-input" />
+                    <input type="text" id="nama" class="form-input" required />
                   </div>
                   <div class="form-group">
                     <label for="email" class="form-label">Email</label>
-                    <input type="email" id="email" class="form-input" />
+                    <input
+                      type="email"
+                      id="email"
+                      class="form-input"
+                      required
+                    />
                   </div>
                   <div class="form-group">
                     <label for="pesan" class="form-label">Pesan</label>
@@ -360,6 +394,7 @@
                       id="pesan"
                       rows="4"
                       class="form-textarea"
+                      required
                     ></textarea>
                   </div>
                   <button type="submit" class="btn btn-primary">
